@@ -1,23 +1,9 @@
 const puppeteer = require('puppeteer')
 
+const { fetchGridItems, handlePrivacy, handleOnPagePagination } =require('./lib/scrapeFunctions')
 const url = 'https://www.marksandspencer.com/l/offers/sale/home-sale'
 // const url = 'https://www.marksandspencer.com/cabin-4-wheel-hard-suitcase-with-security-zip/p/hbp22462792?color=CRANBERRY'
 
-
-const fetchItems = async page => {
-  const items = await page.$$('ul.grid > li', options => {
-    return options.map(option => option)
-  })
-  console.log('Found', items.length, 'products')
-}
-
-const handlePrivacy = async page => {
-  const privacy = await page.$('.privacy_prompt_footer #consent_prompt_submit')
-  if (!privacy) return false
-  // const inner = await privacy.evaluate(node => node.innerText)
-  // console.log(inner)
-  await privacy.click()
-}
 
 const interceptRequests = async page => {
   await page.setRequestInterception(true)
@@ -29,13 +15,7 @@ const interceptRequests = async page => {
   })
 }
 
-const handleOnPagePagination = async page => {
-  const privacy = await page.$('div.grid__load-more > a')
-  if(!privacy) return false
-  console.log('Pagination', await privacy.evaluate(node => node.innerText))
-  await privacy.click()
-  return true
-}
+
 
 const scrollTopToBottom = async page => {
   await page.evaluate('window.scrollTo(0,0)')
@@ -61,19 +41,17 @@ puppeteer.launch()//{headless: false})
     
     // intercept all image loads and kill them - this should really speed up the page
 
-    await handlePrivacy(page)
+    await handlePrivacy(page, '.privacy_prompt_footer #consent_prompt_submit')
 
-    let onPagePagination = true
-    while (onPagePagination === true) {
-      onPagePagination = await handleOnPagePagination(page)
-      await page.waitForTimeout(2000)
-    }
+    await handleOnPagePagination(page, 'div.grid__load-more > a')
 
     await scrollTopToBottom(page)
     
     await page.waitForTimeout(5000)
 
-    await fetchItems(page)
+    const items = await fetchGridItems(page, 'ul.grid > li')
+    console.log('Found', items.length, 'products')
+
     
     
     const time = new Date().getTime()
