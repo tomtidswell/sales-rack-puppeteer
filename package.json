@@ -1,5 +1,29 @@
 {
+  "name": "sales-rack-puppeteer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "nodemon index.js"
+  },
   "dependencies": {
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1",
     "puppeteer": "^5.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.7.2"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {}
   }
 }

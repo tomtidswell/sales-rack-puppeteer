@@ -1,62 +1,92 @@
 const puppeteer = require('puppeteer')
+const express = require('express')
+const app = express()
+const { fetchConfig } = require('./lib/config')
+const Scrape = require('./lib/scrapeFunctions')
 
-const { fetchGridItems, handlePrivacy, handleOnPagePagination } =require('./lib/scrapeFunctions')
-const url = 'https://www.marksandspencer.com/l/offers/sale/home-sale'
+const retailer = 'marksandspencer'
+
+
+// const url = 'https://www.marksandspencer.com/l/offers/sale/home-sale'
 // const url = 'https://www.marksandspencer.com/cabin-4-wheel-hard-suitcase-with-security-zip/p/hbp22462792?color=CRANBERRY'
 
+const retailerSites = {
+  'marksandspencer': { 'site': 'https://www.marksandspencer.com', whitelist: ['document', 'script', 'xhr', 'fetch', 'image'] },
+  'johnlewis': { 'site': 'https://www.johnlewis.com', whitelist: [] },
+  'dunelm': { 'site': 'https://www.dunelm.com', whitelist: [] }
+}
 
-const interceptRequests = async page => {
-  await page.setRequestInterception(true)
-  page.on('request', req=>{
-    const whitelist = ['document', 'script', 'xhr', 'fetch', 'image']
-    const type = req.resourceType()
-    // console.log(type)
-    whitelist.includes(type) ? req.continue() : req.abort()
-  })
+
+const scrapePage = async config => {
+  console.log(config)
+  if(!config) return
+  const browser = await puppeteer.launch()//{headless: false})
+  const {
+    // retailer,
+    // category,
+    whitelist,
+    pageUrl,
+    privacySelector,
+    gridItemSelector,
+    paginationSelector
+  } = config
+  
+  const startTime = new Date()
+  const page = await browser.newPage()
+  // intercept all image loads and kill them - this should really speed up the page
+  await Scrape.interceptRequests(page, whitelist)
+  await Scrape.navigateTo(page, pageUrl)    
+  if (privacySelector) await Scrape.handlePrivacy(page, privacySelector)
+  if (paginationSelector) await Scrape.handleOnPagePagination(page, paginationSelector)
+  // await scrollTopToBottom(page)
+  // await waitMilliseconds(page, 3000)
+
+  console.log('Fetching items')
+  const items = await Scrape.fetchGridItems(page, gridItemSelector).catch(err=>console.log('Error:',err)) 
+  console.log('Items:', items)
+  // await page.screenshot({ path: `./screenshots/${new Date().getTime()}.png`})
+  await browser.close()
+  const timeDiff = new Date(new Date() - startTime)
+  return {
+    runtime: timeDiff.getUTCSeconds(),
+    count: items ? items.length : 0,
+    items
+  }
+}
+
+
+const scrapeRetailer = async () => {
+  const retailerConfig = await fetchConfig(retailer)
+  if (!retailerConfig) throw new Error('No config') 
+  const results = []
+  for (const config of retailerConfig){
+    config.whitelist = retailerSites[retailer].whitelist
+    config.pageUrl = `${retailerSites[retailer].site}${config.page}`
+    const pageResults = await scrapePage(config).catch(err=>{
+      throw new Error('Scrape error', err) 
+    })
+    console.log('Page results',pageResults)
+    results.push(pageResults)
+  }
+  console.log('All results',results)
+  return results
 }
 
 
 
-const scrollTopToBottom = async page => {
-  await page.evaluate('window.scrollTo(0,0)')
-  let pageHeight = 0
-  let scrolledTo = 0
-  let portion = 0
-  do {
-    pageHeight = await page.evaluate('document.body.clientHeight')
-    scrolledTo = await page.evaluate('pageYOffset')
-    await page.evaluate('window.scrollBy(0,400)')
-    portion = scrolledTo / pageHeight
-    console.log(portion)
-  } while (portion < 0.99)
-}
 
 
-puppeteer.launch()//{headless: false})
-  .then(async browser => {
-    const page = await browser.newPage()
-    await interceptRequests(page)
-    await page.goto(url, {waitUntil: 'networkidle0'})
-    // const html = await page.content()
-    
-    // intercept all image loads and kill them - this should really speed up the page
+app.use('/scr',(req,res)=>{
+  scrapeRetailer()
+    .then(result => res.status(200).json(result))
+    .catch(err => res.status(500).json(err))
 
-    await handlePrivacy(page, '.privacy_prompt_footer #consent_prompt_submit')
+})
 
-    await handleOnPagePagination(page, 'div.grid__load-more > a')
+app.use('*',(req,res)=>{
+  res.sendStatus(404)
+})
 
-    await scrollTopToBottom(page)
-    
-    await page.waitForTimeout(5000)
 
-    const items = await fetchGridItems(page, 'ul.grid > li')
-    console.log('Found', items.length, 'products')
 
-    
-    
-    const time = new Date().getTime()
-    await page.screenshot({ path: `./screenshots/${time}.png`})
-    await browser.close()
-  })
-
-// console.log('hello')
+app.listen(7000, () => console.log(`Listening on port ${7000}`))
