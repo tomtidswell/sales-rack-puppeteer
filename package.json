@@ -6,9 +6,12 @@
     "serve": "nodemon index.js"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "express": "^4.17.1",
+    "lodash": "^4.17.20",
     "node-fetch": "^2.6.1",
-    "puppeteer": "^5.5.0"
+    "puppeteer": "^5.5.0",
+    "serverless-http": "^2.7.0"
   },
   "devDependencies": {
     "eslint": "^6.7.2"

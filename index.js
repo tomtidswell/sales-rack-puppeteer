@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer')
+const serverless = require('serverless-http')
 const express = require('express')
 const app = express()
 const { fetchConfig } = require('./lib/config')
@@ -88,5 +89,7 @@ app.use('*',(req,res)=>{
 })
 
 
+const serverlessMode = true
 
-app.listen(7000, () => console.log(`Listening on port ${7000}`))
+if (serverlessMode) module.exports.handler = serverless(app)
+else app.listen(7000, () => console.log(`Listening on port ${7000}`))
