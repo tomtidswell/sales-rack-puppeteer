@@ -38,8 +38,9 @@ class Scraper {
     this.filter()
     this.enhance()
     await this.upload()
-    console.log('Successes', this.submitSuccesses)
-    console.log('Failures', this.submitFailures)
+    await this.saveStats()
+    console.log('Successes', this.submitSuccesses.length)
+    console.log('Failures', this.submitFailures.length)
   }
   async getSettings() {
     this.settings = await this.getData(`https://sharp-turing-d1c0f9.netlify.app/api/scrapesettings?retailer=${this.retailer}`)
@@ -47,29 +48,26 @@ class Scraper {
   async scrape() { console.log('Implement scrape') }
   map() {
     this.mappedProducts = this.scrapedProducts.map(p => this.mapProduct(p))
-    console.log(this.mappedProducts[0], 'First mapped product')
+    // console.log(this.mappedProducts[0], 'First mapped product')
     console.log(this.mappedProducts.length, 'Mapped products')
   }
   mapProduct(p) { return p }
   filter() {
     this.filteredProducts = this.mappedProducts.filter(p => this.filterProduct(p))
-    console.log(this.filteredProducts[0], 'First filtered product')
+    // console.log(this.filteredProducts[0], 'First filtered product')
     console.log(this.filteredProducts.length, 'Filtered products')
   }
   filterProduct(p) { return p }
   enhance() { 
     this.enhancedProducts = this.filteredProducts.map(p => this.enhanceProduct(p))
-    console.log(this.enhancedProducts[0], 'First enhanced product')
+    // console.log(this.enhancedProducts[0], 'First enhanced product')
     console.log(this.enhancedProducts.length, 'Enhanced products')
   }
   enhanceProduct(p) { return p }
   async upload() {
     for (const i in this.enhancedProducts) {
-      // console.log(this.enhancedProducts[i])
-      await this.uploadProduct(this.enhancedProducts[i])
-        
+      await this.uploadProduct(this.enhancedProducts[i])   
     }
-    // this.enhancedProducts.forEach(async p => await this.uploadProduct(p))
   }
   async uploadProduct(p) {
     const res = await fetch('https://sharp-turing-d1c0f9.netlify.app/api/products', {
@@ -78,9 +76,24 @@ class Scraper {
       headers: { 'Content-Type': 'application/json' },
     })
     const data = await res.json()
-    console.log({ ...data, status: res.status })
     if (res.status === 202) this.submitSuccesses.push({ ...data, status: res.status })
     else this.submitFailures.push({ ...data, status: res.status })
+  }
+  async saveStats() {
+    const body = {
+      "retailer": this.retailer,
+      "category": this.settings[0].category,
+      "totalProducts": this.scrapedProducts.length,
+      "success": this.submitSuccesses.length,
+      "failure": this.submitFailures.length,
+    }
+    const res = await fetch('https://sharp-turing-d1c0f9.netlify.app/api/scrapes', {
+      method: 'post',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (res.status === 201) console.log('Saved stats')
+    else console.log('Error saving stats')
   }
 }
 
@@ -125,6 +138,7 @@ class MarksAndSpencerScraper extends Scraper {
     return true
   }
   enhanceProduct(item) {
+    const category = this.settings[0].category
     return {
       name: item.title,
       url: `${this.site}${item.url}`,
@@ -133,7 +147,8 @@ class MarksAndSpencerScraper extends Scraper {
       prevPrice: item.prevPrice.price,
       image: item.image,
       source: this.settings[0].page,
-      retailer: this.retailer
+      retailer: this.retailer,
+      category
     }
   }
   
@@ -163,43 +178,26 @@ x.begin()
 // category: { type: String },
 
 
-
-//  def fetch_settings(self):
-//         res = None
-//         try:
-//             res = requests.get(
-//                 f"https://sharp-turing-d1c0f9.netlify.app/api/scrapesettings?retailer={self.retailer}"
-//             )
-//         except Exception as e:
-//             print("Failure fetching scrape settings", e)
-        
-//         if not res:
-//             raise APIConnectionError()
-//         elif res.status_code != 200:
-//             raise APIError(res)
-//         else:
-//             self.settings = res.json()
-//             print("Success fetching scrape settings", res, self.settings)
-
-template = {
-  title: 'Percale Flat Sheet',
-  brand: '',
-  wineAwardUrl: false,
-  productAwards: false,
-  productId: 'P22319604',
-  upc: '05994533',
-  promotionText: 'Sale on selected items',
-  isSalePrice: true,
-  outOfStock: false,
-  swatchList: { available: 13, swatches: [Array] },
-  price: {
-    retail: '',
-    sale: '&pound;7.00 - £19.50',
-    perUnit: '',
-    saleFlag: true
-  },
-  rating: { percentage: 88.6, text: '4.43' },
-  url: '/percale-flat-sheet/p/hbp22319604?color=WHITE',
-  badge: null,
-  image: { urls: [Object] }
-}
+// M&S sample json 
+// template = {
+//   title: 'Percale Flat Sheet',
+//   brand: '',
+//   wineAwardUrl: false,
+//   productAwards: false,
+//   productId: 'P22319604',
+//   upc: '05994533',
+//   promotionText: 'Sale on selected items',
+//   isSalePrice: true,
+//   outOfStock: false,
+//   swatchList: { available: 13, swatches: [Array] },
+//   price: {
+//     retail: '',
+//     sale: '&pound;7.00 - £19.50',
+//     perUnit: '',
+//     saleFlag: true
+//   },
+//   rating: { percentage: 88.6, text: '4.43' },
+//   url: '/percale-flat-sheet/p/hbp22319604?color=WHITE',
+//   badge: null,
+//   image: { urls: [Object] }
+// }
