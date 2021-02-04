@@ -40,7 +40,7 @@ class MarksAndSpencerScraper extends DataScraper {
     }
   }
   filterProduct(item) {
-    if (!item.isSale) return false
+    // if (!item.isSale) return false
     return true
   }
   enhanceProduct(item) {
