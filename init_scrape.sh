@@ -1,5 +1,7 @@
 #!/bin/bash
-/home/ubuntu/.nvm/versions/node/v14.15.4/bin/node ~/sales-rack-puppeteer/index.js
+sudo ~/.nvm/versions/node/v14.15.4/bin/node ~/sales-rack-puppeteer/index.js
+
+# chmod a+x init_scrape.sh
 
 # Every hour in crontab via this script
 # 0 * * * * ~/sales-rack-puppeteer/init_scrape.sh
