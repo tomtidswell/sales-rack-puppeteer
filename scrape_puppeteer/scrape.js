@@ -1,21 +1,23 @@
 const puppeteer = require('puppeteer')
 const ScrapeFunc = require('../lib/scrapeFunctions')
 
-const retailer = 'johnlewis'
-
-
-// const url = 'https://www.marksandspencer.com/l/offers/sale/home-sale'
-// const url = 'https://www.marksandspencer.com/cabin-4-wheel-hard-suitcase-with-security-zip/p/hbp22462792?color=CRANBERRY'
-
-const retailerSites = {
-  'marksandspencer': { 'site': 'https://www.marksandspencer.com', whitelist: ['document', 'script', 'xhr', 'fetch', 'image'] },
-  'johnlewis': { 'site': 'https://www.johnlewis.com', whitelist: ['document', 'script'] },
-  'dunelm': { 'site': 'https://www.dunelm.com', whitelist: [] }
-}
-
+// const retailer = 'johnlewis'
+// const retailerSites = {
+//   'marksandspencer': { 'site': 'https://www.marksandspencer.com', whitelist: ['document', 'script', 'xhr', 'fetch', 'image'] },
+//   'johnlewis': { 'site': 'https://www.johnlewis.com', whitelist: ['document', 'script'] },
+//   'dunelm': { 'site': 'https://www.dunelm.com', whitelist: [] }
+// }
+// const scrapeRetailer = async (config) => {
+//   config.whitelist = retailerSites[retailer].whitelist
+//   config.pageUrl = `${retailerSites[retailer].site}${config.page}`
+//   const results = await scrapePage(config).catch(err => {
+//     throw new Error('Scrape error', err)
+//   })
+//   return results
+// }
 
 const scrapePage = async config => {
-  console.log(config)
+  console.log('Puppeteer scraping:', config.page)
   if(!config) return
   const browser = await puppeteer.launch()//{headless: false})
   const {
@@ -32,7 +34,7 @@ const scrapePage = async config => {
   const page = await browser.newPage()
   // intercept all image loads and kill them - this should really speed up the page
   await ScrapeFunc.interceptRequests(page, whitelist)
-  await ScrapeFunc.navigateTo(page, pageUrl)    
+  await ScrapeFunc.navigateTo(page, `${config.site}${config.page}`)    
   // if (privacySelector) await ScrapeFunc.handlePrivacy(page, privacySelector)
   // if (paginationSelector) await ScrapeFunc.handleOnPagePagination(page, paginationSelector)
   await ScrapeFunc.scrollTopToBottom(page)
@@ -52,41 +54,4 @@ const scrapePage = async config => {
 }
 
 
-const scrapeRetailer = async (configs) => {
-  const results = []
-  for (const config of configs){
-    config.whitelist = retailerSites[retailer].whitelist
-    config.pageUrl = `${retailerSites[retailer].site}${config.page}`
-    const pageResults = await scrapePage(config).catch(err=>{
-      throw new Error('Scrape error', err) 
-    })
-    console.log('Page results',pageResults.length)
-    results.push(pageResults)
-    break
-    // merge results back together
-  }
-  // console.log('All results',results.length)
-  // console.log('All results',results.length)
-  return results[0]
-}
-
-
-
-module.exports = scrapeRetailer
-
-// app.use('/scr',(req,res)=>{
-//   scrapeRetailer()
-//     .then(result => res.status(200).json(result))
-//     .catch(err => res.status(500).json(err))
-
-// })
-
-// app.use('*',(req,res)=>{
-//   res.sendStatus(404)
-// })
-
-
-// const serverlessMode = true
-
-// if (serverlessMode) module.exports.handler = serverless(app)
-// else app.listen(7000, () => console.log(`Listening on port ${7000}`))
+module.exports = scrapePage

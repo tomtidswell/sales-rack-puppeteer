@@ -1,4 +1,4 @@
-
+const fetch = require('node-fetch')
 const DataScraper = require('../scrape_http/main')
 const { parsePrice } = require('../lib/parse')
 const _ = require('lodash')
@@ -6,7 +6,15 @@ const _ = require('lodash')
 class MarksAndSpencerScraper extends DataScraper {
   constructor(retailer) {
     super(retailer)
-    this.site = "https://www.marksandspencer.com"
+  }
+  async getData(url) {
+    try {
+      const res = await fetch(url)
+      return await res.json()
+    } catch (error) {
+      console.log('Triggered:', error.message)
+      return { abort: true }
+    }
   }
   async paginate(url) {
     let allData = []
@@ -14,7 +22,7 @@ class MarksAndSpencerScraper extends DataScraper {
     let count = 0
     do {
       i += 1
-      const data = await this.getData(`${this.site}${url}&page=${i}`)
+      const data = await this.getData(`${url}&page=${i}`)
       if (data.abort) break
       count = data.count
       allData = [ ...allData, ..._.flatten(data.tiles)]
@@ -24,8 +32,9 @@ class MarksAndSpencerScraper extends DataScraper {
   async scrape() {
     console.log('SCRAPING M&S')
     console.log(this.config)
-    if(!this.config || !this.config[0]) return
-    await this.paginate(this.config[0].page)
+    console.log(`${this.config.site}${this.config.page}`)
+    if(!this.config) return
+    await this.paginate(`${this.config.site}${this.config.page}`)
   }
   mapProduct(item) {
     const { title, url, price: sourcePrice, image, promotionText: badge, rating, swatchList } = item.data
@@ -44,16 +53,16 @@ class MarksAndSpencerScraper extends DataScraper {
     return true
   }
   enhanceProduct(item) {
-    const category = this.config[0].category
+    const category = this.config.category
     return {
       name: item.title,
-      url: `${this.site}${item.url}`,
+      url: `${this.config.site}${item.url}`,
       badge: item.badge,
       price: item.reducedPrice.price,
       prevPrice: item.prevPrice.price,
       image: item.image,
-      source: this.config[0].page,
-      retailer: this.config[0].retailer,
+      source: this.config.page,
+      retailer: this.config.retailer,
       category
     }
   }

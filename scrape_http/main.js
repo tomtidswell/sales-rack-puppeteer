@@ -10,21 +10,7 @@ class DataScraper {
     this.submitSuccesses = []
     this.submitFailures = []
   }
-  async getData(url) {
-    try {
-      const res = await fetch(url)
-      return await res.json()
-    } catch (error) {
-      console.log('Triggered:', error.message)
-      return { abort: true }
-    }
-  }
   async begin() {
-    // await this.getconfig()
-    // if (!this.config.length) {
-    //   console.log('Quitting - no config found')
-    //   return
-    // }
     await this.scrape()
     if (!this.scrapedProducts.length) {
       console.log('Quitting - no scraped products found')
@@ -33,19 +19,17 @@ class DataScraper {
     this.map()
     this.filter()
     this.enhance()
-    // await this.upload()
-    // await this.saveStats()
-    // console.log('Successes', this.submitSuccesses.length)
-    // console.log('Failures', this.submitFailures.length)
+    // console.log('Final products', this.enhancedProducts)
+    await this.upload()
+    await this.saveStats()
+    console.log('Successes', this.submitSuccesses.length)
+    console.log('Failures', this.submitFailures)
     console.log('DONE')
   }
-  // async getconfig() {
-  //   this.config = await this.getData(`https://sharp-turing-d1c0f9.netlify.app/api/scrapeconfig?retailer=${this.retailer}`)
-  // }
   async scrape() { console.log('Implement scrape') }
   map() {
     this.mappedProducts = this.scrapedProducts.map(p => this.mapProduct(p))
-    // console.log(this.mappedProducts[0], 'First mapped product')
+    console.log(this.mappedProducts[0], 'First mapped product')
     console.log(this.mappedProducts.length, 'Mapped products')
   }
   mapProduct(p) { return p }
@@ -57,7 +41,7 @@ class DataScraper {
   filterProduct(p) { return p }
   enhance() {
     this.enhancedProducts = this.filteredProducts.map(p => this.enhanceProduct(p))
-    // console.log(this.enhancedProducts[0], 'First enhanced product')
+    console.log(this.enhancedProducts[0], 'First enhanced product')
     console.log(this.enhancedProducts.length, 'Enhanced products')
   }
   enhanceProduct(p) { return p }
@@ -73,13 +57,19 @@ class DataScraper {
       headers: { 'Content-Type': 'application/json' },
     })
     const data = await res.json()
-    if (res.status === 202) this.submitSuccesses.push({ ...data, status: res.status })
-    else this.submitFailures.push({ ...data, status: res.status })
+    if (res.status === 202) {
+      console.log('SUCCESS', p.name)
+      this.submitSuccesses.push({ ...data, status: res.status })
+    }
+    else {
+      console.log('FAILURE', p.name, )
+      this.submitFailures.push({ ...data, status: res.status })
+    }
   }
   async saveStats() {
     const body = {
-      "retailer": this.retailer,
-      "category": this.config[0].category,
+      "retailer": this.config.retailer,
+      "category": this.config.category,
       "totalProducts": this.scrapedProducts.length,
       "success": this.submitSuccesses.length,
       "failure": this.submitFailures.length,

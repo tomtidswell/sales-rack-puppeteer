@@ -1,5 +1,5 @@
 #!/bin/bash
-sudo ~/.nvm/versions/node/v14.15.4/bin/node ~/sales-rack-puppeteer/index.js
+sudo ~/.nvm/versions/node/v14.15.4/bin/node ~/sales-rack-puppeteer/index.js marksandspencer
 
 # chmod a+x init_scrape.sh
 
