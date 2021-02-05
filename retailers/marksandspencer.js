@@ -1,5 +1,5 @@
 
-const DataScraper = require('./main')
+const DataScraper = require('../scrape_http/main')
 const { parsePrice } = require('../lib/parse')
 const _ = require('lodash')
 
@@ -23,9 +23,9 @@ class MarksAndSpencerScraper extends DataScraper {
   }
   async scrape() {
     console.log('SCRAPING M&S')
-    console.log(this.settings)
-    if(!this.settings || !this.settings[0]) return
-    await this.paginate(this.settings[0].page)
+    console.log(this.config)
+    if(!this.config || !this.config[0]) return
+    await this.paginate(this.config[0].page)
   }
   mapProduct(item) {
     const { title, url, price: sourcePrice, image, promotionText: badge, rating, swatchList } = item.data
@@ -44,7 +44,7 @@ class MarksAndSpencerScraper extends DataScraper {
     return true
   }
   enhanceProduct(item) {
-    const category = this.settings[0].category
+    const category = this.config[0].category
     return {
       name: item.title,
       url: `${this.site}${item.url}`,
@@ -52,8 +52,8 @@ class MarksAndSpencerScraper extends DataScraper {
       price: item.reducedPrice.price,
       prevPrice: item.prevPrice.price,
       image: item.image,
-      source: this.settings[0].page,
-      retailer: this.retailer,
+      source: this.config[0].page,
+      retailer: this.config[0].retailer,
       category
     }
   }

@@ -1,9 +1,8 @@
 const fetch = require('node-fetch')
 
 class DataScraper {
-  constructor(retailer) {
-    this.retailer = retailer
-    this.settings = []
+  constructor(config) {
+    this.config = config
     this.scrapedProducts = []
     this.mappedProducts = []
     this.filteredProducts = []
@@ -21,11 +20,11 @@ class DataScraper {
     }
   }
   async begin() {
-    await this.getSettings()
-    if (!this.settings.length) {
-      console.log('Quitting - no settings found')
-      return
-    }
+    // await this.getconfig()
+    // if (!this.config.length) {
+    //   console.log('Quitting - no config found')
+    //   return
+    // }
     await this.scrape()
     if (!this.scrapedProducts.length) {
       console.log('Quitting - no scraped products found')
@@ -34,14 +33,15 @@ class DataScraper {
     this.map()
     this.filter()
     this.enhance()
-    await this.upload()
-    await this.saveStats()
-    console.log('Successes', this.submitSuccesses.length)
-    console.log('Failures', this.submitFailures.length)
+    // await this.upload()
+    // await this.saveStats()
+    // console.log('Successes', this.submitSuccesses.length)
+    // console.log('Failures', this.submitFailures.length)
+    console.log('DONE')
   }
-  async getSettings() {
-    this.settings = await this.getData(`https://sharp-turing-d1c0f9.netlify.app/api/scrapesettings?retailer=${this.retailer}`)
-  }
+  // async getconfig() {
+  //   this.config = await this.getData(`https://sharp-turing-d1c0f9.netlify.app/api/scrapeconfig?retailer=${this.retailer}`)
+  // }
   async scrape() { console.log('Implement scrape') }
   map() {
     this.mappedProducts = this.scrapedProducts.map(p => this.mapProduct(p))
@@ -79,7 +79,7 @@ class DataScraper {
   async saveStats() {
     const body = {
       "retailer": this.retailer,
-      "category": this.settings[0].category,
+      "category": this.config[0].category,
       "totalProducts": this.scrapedProducts.length,
       "success": this.submitSuccesses.length,
       "failure": this.submitFailures.length,
