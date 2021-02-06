@@ -16,10 +16,23 @@ const ScrapeFunc = require('../lib/scrapeFunctions')
 //   return results
 // }
 
+
+/**
+ * Return true if the current process is run by the root user
+ */
+function isCurrentUserRoot() {
+  return process.getuid() == 0; // UID 0 is always root
+}
+
+
+
 const scrapePage = async config => {
   console.log('Puppeteer scraping:', config.page)
   if(!config) return
-  const browser = await puppeteer.launch()//{headless: false})
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: isCurrentUserRoot() ? ['--no-sandbox'] : undefined
+  })
   const {
     // retailer,
     // category,
