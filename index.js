@@ -45,6 +45,6 @@ if (!retailerSites[retailer]) {
     const enhancedConfig = {...config, ...retailerSites[retailer]}
     // console.log(enhancedConfig)
     const scrape = new Scrape[retailer](enhancedConfig)
-    // await scrape.begin()
+    await scrape.begin()
   }
 })()
