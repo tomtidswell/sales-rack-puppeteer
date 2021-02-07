@@ -29,16 +29,22 @@ if (!retailerSites[retailer]) {
   return
 }
 
-// const configItems = [{
-//   retailer: 'johnlewis',
-//   category: 'tableware',
-//   page: '/browse/clearance/home-garden-offers/tableware-offers/_/N-5nhq',
-//   privacySelector: "button[data-test='allow-all']",
-//   gridItemSelector: "div[data-test='component-grid-container'] > div[data-test='component-grid-column']",
-// }]
 
 ;(async ()=>{
   const configItems = await fetchConfig(retailer)
+  // const configItems = [{
+  //     _id: '5ffcb5aee3f0360bb5177047',
+  //     retailer: 'johnlewis',
+  //     category: 'bedding',
+  //     page: '/browse/clearance/home-garden-offers/bedding-sale/_/N-lmr8',
+  //     privacySelector: "button[data-test='allow-all']",
+  //     gridItemSelector: "div[data-test='component-grid-container'] > div[data-test='component-grid-column']",
+  //     createdAt: '2021-01-11T20:31:42.237Z',
+  //     updatedAt: '2021-01-11T20:31:42.237Z',
+  //     __v: 0,
+  //     site: 'https://www.johnlewis.com',
+  //     whitelist: ['document', 'script']
+  // }]
   if (!configItems && !configItems.length) throw new Error('No config')
 
   for (const config of configItems) {

@@ -1,6 +1,7 @@
 const fetch = require('node-fetch')
 const DataScraper = require('../scrape_http/main')
 const { parsePrice } = require('../lib/parse')
+const { identifyCategory } = require('../lib/category')
 const _ = require('lodash')
 
 class MarksAndSpencerScraper extends DataScraper {
@@ -53,7 +54,7 @@ class MarksAndSpencerScraper extends DataScraper {
     return true
   }
   enhanceProduct(item) {
-    const category = this.config.category
+    const category = identifyCategory(item.title)
     return {
       name: item.title,
       url: `${this.config.site}${item.url}`,

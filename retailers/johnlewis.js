@@ -45,6 +45,7 @@ class JohnLewisScraper extends DataScraper {
   }
   enhanceProduct(item) {
     const price = parsePriceSentence(item.price)
+    console.log(price)
     const product = {
       name: item.name,
       url: `${this.config.site}${item.url}`,
