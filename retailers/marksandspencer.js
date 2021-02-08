@@ -1,6 +1,6 @@
 const fetch = require('node-fetch')
 const DataScraper = require('../scrape_http/main')
-const { parsePrice } = require('../lib/parse')
+const { parsePrice, addDiscounts } = require('../lib/parse')
 const { identifyCategory } = require('../lib/category')
 const _ = require('lodash')
 
@@ -39,11 +39,12 @@ class MarksAndSpencerScraper extends DataScraper {
   }
   mapProduct(item) {
     const { title, url, price: sourcePrice, image, promotionText: badge, rating, swatchList } = item.data
+
     return {
       title, url, badge, sourcePrice,
       isSale: sourcePrice.saleFlag,
-      prevPrice: parsePrice(sourcePrice.retail),
-      reducedPrice: parsePrice(sourcePrice.sale),
+      retailPrice: parsePrice(sourcePrice.retail),
+      salePrice: parsePrice(sourcePrice.sale),
       image: _.get(image, 'urls.base'),
       rating: _.get(rating, 'percentage'),
       variants: _.get(swatchList, 'available')
@@ -54,13 +55,34 @@ class MarksAndSpencerScraper extends DataScraper {
     return true
   }
   enhanceProduct(item) {
-    const category = identifyCategory(item.title)
+    const category = identifyCategory(item.title) || this.config.category
+    
+    const { retailPrice, salePrice } = item
+    
+    let prices = {
+      price: salePrice.price || retailPrice.price
+    }
+    // only add a previous price if it exists, and if its different from the current price
+    if (retailPrice.price && prices.price !== retailPrice.price) prices.prevPrice = retailPrice.price
+    // add a price range only if one exists
+    if (salePrice.priceRange || retailPrice.priceRange) prices.priceRange = salePrice.priceRange || retailPrice.priceRange
+    // only calculate discounts if a price and prev price exist
+    if (prices.price && prices.prevPrice) prices = addDiscounts(prices)
+    
+  
+    console.log('----')
+    console.log('Parsed sale', salePrice)
+    console.log('Parsed retail', retailPrice)
+    console.log('Output', prices)
     return {
       name: item.title,
       url: `${this.config.site}${item.url}`,
       badge: item.badge,
-      price: item.reducedPrice.price,
-      prevPrice: item.prevPrice.price,
+      // price: item.currentPrice.price,
+      // priceRange: item.currentPrice.priceRange,
+      // prevPrice: item.prevPrice.price,
+      // 'disc£': item.prevPrice.price,
+      // 'disc%': item.prevPrice.price,
       image: item.image,
       source: this.config.page,
       retailer: this.config.retailer,
