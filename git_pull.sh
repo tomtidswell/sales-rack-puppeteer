@@ -1,3 +1,3 @@
 #!/bin/bash
-cd ~/sales-rack-puppeteer/index.js johnlewis
+cd ~/sales-rack-puppeteer/index.js
 git pull
