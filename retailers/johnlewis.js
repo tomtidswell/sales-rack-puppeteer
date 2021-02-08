@@ -1,7 +1,7 @@
 
 const DataScraper = require('../scrape_http/main')
 const PuppeteerScraper = require('../scrape_puppeteer/scrape')
-const { parsePrice, parsePriceSentence } = require('../lib/parse')
+const { parsePrice, parsePriceSentence, addDiscounts } = require('../lib/parse')
 const jsdom = require("jsdom")
 const { JSDOM } = jsdom
 const _ = require('lodash')
@@ -44,20 +44,27 @@ class JohnLewisScraper extends DataScraper {
     return true
   }
   enhanceProduct(item) {
-    const price = parsePriceSentence(item.price)
-    console.log(price)
-    const product = {
+    const {first, last, containsRange } = parsePriceSentence(item.price)
+    // console.log('-----')
+    // console.log(first, last, containsRange)
+    let prices = { price: last }
+    // replace the price with the price extracted from the range
+    if (containsRange) prices = parsePrice(last)
+    // if the price is a range, dont add a prevPrice
+    if (first !== last && !containsRange) prices.prevPrice = first
+    // only calculate discounts if a price and prev price exist
+    if (prices.price && prices.prevPrice) prices = addDiscounts(prices)
+
+    return {
       name: item.name,
       url: `${this.config.site}${item.url}`,
       badge: item.badge,
-      price: price.last,
-      prevPrice: price.first !== price.last ? price.first : '',
       image: `https:${item.image}`,
       source: this.config.page,
       retailer: this.config.retailer,
-      category: this.config.category
+      category: this.config.category,
+      ...prices
     }
-    return product
   }
 }
 

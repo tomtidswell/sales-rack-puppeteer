@@ -68,25 +68,15 @@ class MarksAndSpencerScraper extends DataScraper {
     if (salePrice.priceRange || retailPrice.priceRange) prices.priceRange = salePrice.priceRange || retailPrice.priceRange
     // only calculate discounts if a price and prev price exist
     if (prices.price && prices.prevPrice) prices = addDiscounts(prices)
-    
-  
-    console.log('----')
-    console.log('Parsed sale', salePrice)
-    console.log('Parsed retail', retailPrice)
-    console.log('Output', prices)
+
     return {
       name: item.title,
       url: `${this.config.site}${item.url}`,
       badge: item.badge,
-      // price: item.currentPrice.price,
-      // priceRange: item.currentPrice.priceRange,
-      // prevPrice: item.prevPrice.price,
-      // 'disc£': item.prevPrice.price,
-      // 'disc%': item.prevPrice.price,
       image: item.image,
       source: this.config.page,
       retailer: this.config.retailer,
-      category
+      category, ...prices
     }
   }
 }
